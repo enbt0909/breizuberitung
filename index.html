@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Breizubereitung - Rezeptverwaltung für verschiedene Breisorten mit Portionsberechnung">
+    <title>Breizubereitung - Rezeptverwaltung</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --border-radius: 8px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .search-section {
+            margin-bottom: 2rem;
+        }
+
+        #searchInput {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        .brei-section h2 {
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        #breiGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .breiItem {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            text-align: center;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            box-shadow: var(--shadow);
+            font-weight: 500;
+        }
+
+        .breiItem:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .breiItem:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        .recipe-section {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .recipe-section[aria-hidden="true"] {
+            display: none;
+        }
+
+        .recipe-section h2 {
+            text-align: center;
+            margin: 0 0 1.5rem 0;
+            color: var(--text-primary);
+            font-size: 1.8rem;
+        }
+
+        .recipe-controls {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .recipe-controls label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .recipe-controls input {
+            padding: 0.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            width: 80px;
+        }
+
+        .recipe-controls input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .recipe-controls small {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface-color);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--background-color);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        td input {
+            width: 100%;
+            max-width: 100px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        td input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .recipe-actions {
+            text-align: right;
+        }
+
+        .recipe-actions button {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .recipe-actions button:hover {
+            background: #dc2626;
+        }
+
+        .add-brei-section {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .add-brei-section h2 {
+            margin: 0 0 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        fieldset {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        legend {
+            font-weight: 500;
+            color: var(--text-primary);
+            padding: 0 0.5rem;
+        }
+
+        .ingredient-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .ingredient-row input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .ingredient-row input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .removeIngredient {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .removeIngredient:hover {
+            background: #dc2626;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #addIngredientBtn {
+            background: var(--secondary-color);
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        #addIngredientBtn:hover {
+            background: #475569;
+        }
+
+        #addBreiBtn {
+            background: var(--success-color);
+            color: white;
+        }
+
+        #addBreiBtn:hover {
+            background: #059669;
+        }
+
+        #resetForm {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        #resetForm:hover {
+            background: #475569;
+        }
+
+        footer {
+            background: var(--text-primary);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 3rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            #breiGrid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 0.75rem;
+            }
+
+            .breiItem {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .recipe-section,
+            .add-brei-section {
+                padding: 1rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .ingredient-row {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .ingredient-row input {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #breiGrid {
+                grid-template-columns: 1fr;
+            }
+
+            .breiItem {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Loading and Animation States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Focus styles for accessibility */
+        *:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        button:focus,
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Breizubereitung</h1>
+        <p>Verwalte deine Breirezepte und berechne Portionen</p>
+    </header>
+
+    <main>
+        <section id="searchSection" class="search-section">
+            <input type="text" id="searchInput" placeholder="Breisorte suchen..." aria-label="Breisorte suchen">
+        </section>
+
+        <section id="breiSection" class="brei-section">
+            <h2>Verfügbare Breisorten</h2>
+            <div id="breiGrid" role="grid" aria-label="Liste der verfügbaren Breisorten"></div>
+        </section>
+
+        <section id="recipe" class="recipe-section" aria-hidden="true">
+            <h2 id="recipeName"></h2>
+            <div class="recipe-controls">
+                <label for="portions" id="portionsLabel">Portionen: 
+                    <input type="number" id="portions" value="1" min="1" max="20" aria-describedby="portions-help">
+                </label>
+                <small id="portions-help">Ändere die Anzahl der Portionen, um die Mengen automatisch anzupassen</small>
+            </div>
+            <div class="table-container">
+                <table role="table" aria-label="Rezeptzutaten">
+                    <thead>
+                        <tr>
+                            <th scope="col">Zutat</th>
+                            <th scope="col">Menge pro Portion</th>
+                            <th scope="col">Gesamtmenge</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recipeBody"></tbody>
+                </table>
+            </div>
+            <div class="recipe-actions">
+                <button id="closeRecipe" type="button" aria-label="Rezept schließen">×</button>
+            </div>
+        </section>
+
+        <section id="addBrei" class="add-brei-section">
+            <h2>Neue Breisorte hinzufügen</h2>
+            <form id="addBreiForm" novalidate>
+                <div class="form-group">
+                    <label for="newBreiName">Brei-Name:</label>
+                    <input type="text" id="newBreiName" placeholder="z.B. Haferbrei mit Beeren" required aria-describedby="name-help">
+                    <small id="name-help">Gib einen aussagekräftigen Namen für deinen Brei ein</small>
+                </div>
+                
+                <fieldset>
+                    <legend>Zutaten</legend>
+                    <div id="ingredientsContainer">
+                        <div class="ingredient-row">
+                            <input type="text" placeholder="Zutat" required aria-label="Zutat">
+                            <input type="number" placeholder="Menge" min="0" step="0.1" required aria-label="Menge pro Portion">
+                            <button type="button" class="removeIngredient" aria-label="Zutat entfernen">-</button>
+                        </div>
+                    </div>
+                    <button type="button" id="addIngredientBtn">+ Zutat hinzufügen</button>
+                </fieldset>
+                
+                <div class="form-actions">
+                    <button type="submit" id="addBreiBtn">Brei hinzufügen</button>
+                    <button type="reset" id="resetForm">Zurücksetzen</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Breizubereitung - Alle Rezepte werden lokal gespeichert</p>
+    </footer>
+
+    <script>
+        // Brei Recipe Manager - Optimized Version
+        class BreiManager {
+            constructor() {
+                this.rezepte = {};
+                this.currentIngredients = [];
+                this.filteredRezepte = {};
+                this.searchTerm = '';
+                
+                this.initializeElements();
+                this.initializeData();
+                this.bindEvents();
+                this.renderBreiGrid();
+            }
+
+            initializeElements() {
+                // Get all DOM elements
+                this.elements = {
+                    breiGrid: document.getElementById('breiGrid'),
+                    recipeDiv: document.getElementById('recipe'),
+                    recipeName: document.getElementById('recipeName'),
+                    recipeBody: document.getElementById('recipeBody'),
+                    portionsInput: document.getElementById('portions'),
+                    searchInput: document.getElementById('searchInput'),
+                    closeRecipeBtn: document.getElementById('closeRecipe'),
+                    newBreiNameInput: document.getElementById('newBreiName'),
+                    ingredientsContainer: document.getElementById('ingredientsContainer'),
+                    addIngredientBtn: document.getElementById('addIngredientBtn'),
+                    addBreiBtn: document.getElementById('addBreiBtn'),
+                    addBreiForm: document.getElementById('addBreiForm'),
+                    resetFormBtn: document.getElementById('resetForm')
+                };
+            }
+
+            initializeData() {
+                // Load from localStorage or initialize with default recipes
+                try {
+                    const stored = localStorage.getItem('rezepte');
+                    if (stored) {
+                        this.rezepte = JSON.parse(stored);
+                    } else {
+                        this.initializeDefaultRecipes();
+                    }
+                } catch (error) {
+                    console.error('Error loading recipes:', error);
+                    this.initializeDefaultRecipes();
+                }
+                this.filteredRezepte = { ...this.rezepte };
+            }
+
+            initializeDefaultRecipes() {
+                this.rezepte = {
+                    "Haferbrei": [
+                        { name: "Wasser (ml)", menge: 200 },
+                        { name: "Haferflocken (g)", menge: 50 },
+                        { name: "Milch (ml)", menge: 100 },
+                        { name: "Banane (g)", menge: 50 },
+                        { name: "Zimt (g)", menge: 2 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Reisbrei": [
+                        { name: "Wasser (ml)", menge: 250 },
+                        { name: "Reis (g)", menge: 60 },
+                        { name: "Milch (ml)", menge: 80 },
+                        { name: "Apfel (g)", menge: 50 },
+                        { name: "Vanille (g)", menge: 2 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Grießbrei": [
+                        { name: "Milch (ml)", menge: 250 },
+                        { name: "Grieß (g)", menge: 40 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 },
+                        { name: "Butter (g)", menge: 10 }
+                    ],
+                    "Maisbrei": [
+                        { name: "Wasser (ml)", menge: 200 },
+                        { name: "Maisgrieß (g)", menge: 50 },
+                        { name: "Milch (ml)", menge: 50 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Hirsebrei": [
+                        { name: "Wasser (ml)", menge: 200 },
+                        { name: "Hirse (g)", menge: 50 },
+                        { name: "Milch (ml)", menge: 50 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Buchweizenbrei": [
+                        { name: "Wasser (ml)", menge: 200 },
+                        { name: "Buchweizen (g)", menge: 50 },
+                        { name: "Milch (ml)", menge: 50 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Dinkelbrei": [
+                        { name: "Wasser (ml)", menge: 200 },
+                        { name: "Dinkelgrieß (g)", menge: 50 },
+                        { name: "Milch (ml)", menge: 50 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Zimt (g)", menge: 2 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Quinoabrei": [
+                        { name: "Wasser (ml)", menge: 200 },
+                        { name: "Quinoa (g)", menge: 50 },
+                        { name: "Milch (ml)", menge: 50 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Kokosbrei": [
+                        { name: "Milch (ml)", menge: 200 },
+                        { name: "Kokosraspeln (g)", menge: 40 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 }
+                    ],
+                    "Mandelbrei": [
+                        { name: "Milch (ml)", menge: 200 },
+                        { name: "Mandelmehl (g)", menge: 40 },
+                        { name: "Zucker (g)", menge: 5 },
+                        { name: "Salz (g)", menge: 1 }
+                    ]
+                };
+                this.saveRecipes();
+            }
+
+            bindEvents() {
+                // Search functionality
+                this.elements.searchInput.addEventListener('input', (e) => {
+                    this.searchTerm = e.target.value.toLowerCase();
+                    this.filterRecipes();
+                });
+
+                // Recipe display
+                this.elements.portionsInput.addEventListener('input', () => this.updateTotals());
+                this.elements.closeRecipeBtn.addEventListener('click', () => this.hideRecipe());
+
+                // Form handling
+                this.elements.addBreiForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addNewRecipe();
+                });
+
+                this.elements.addIngredientBtn.addEventListener('click', () => this.addIngredientRow());
+                this.elements.resetFormBtn.addEventListener('click', () => this.resetForm());
+
+                // Dynamic ingredient removal
+                this.elements.ingredientsContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('removeIngredient')) {
+                        this.removeIngredientRow(e.target.parentElement);
+                    }
+                });
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hideRecipe();
+                    }
+                });
+
+                // Input validation for recipe ingredients
+                document.addEventListener('input', (e) => {
+                    if (e.target.classList.contains('perPortion')) {
+                        this.updateTotals();
+                    }
+                });
+            }
+
+            filterRecipes() {
+                if (!this.searchTerm) {
+                    this.filteredRezepte = { ...this.rezepte };
+                } else {
+                    this.filteredRezepte = {};
+                    Object.keys(this.rezepte).forEach(name => {
+                        if (name.toLowerCase().includes(this.searchTerm)) {
+                            this.filteredRezepte[name] = this.rezepte[name];
+                        }
+                    });
+                }
+                this.renderBreiGrid();
+            }
+
+            renderBreiGrid() {
+                this.elements.breiGrid.innerHTML = '';
+                
+                const recipeNames = Object.keys(this.filteredRezepte).sort();
+                
+                if (recipeNames.length === 0) {
+                    const noResults = document.createElement('div');
+                    noResults.textContent = 'Keine Rezepte gefunden';
+                    noResults.style.textAlign = 'center';
+                    noResults.style.padding = '2rem';
+                    noResults.style.color = 'var(--text-secondary)';
+                    this.elements.breiGrid.appendChild(noResults);
+                    return;
+                }
+
+                recipeNames.forEach(name => {
+                    const div = document.createElement('div');
+                    div.classList.add('breiItem', 'fade-in');
+                    div.textContent = name;
+                    div.setAttribute('tabindex', '0');
+                    div.setAttribute('role', 'button');
+                    div.setAttribute('aria-label', `Rezept ${name} anzeigen`);
+                    
+                    // Click and keyboard events
+                    const showRecipe = () => this.showRecipe(name);
+                    div.addEventListener('click', showRecipe);
+                    div.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            showRecipe();
+                        }
+                    });
+                    
+                    this.elements.breiGrid.appendChild(div);
+                });
+            }
+
+            showRecipe(breiName) {
+                if (!this.rezepte[breiName]) return;
+
+                this.elements.recipeDiv.setAttribute('aria-hidden', 'false');
+                this.elements.recipeName.textContent = breiName;
+                this.elements.recipeBody.innerHTML = '';
+                this.currentIngredients = [];
+
+                this.rezepte[breiName].forEach(ingredient => {
+                    const tr = document.createElement('tr');
+
+                    const tdName = document.createElement('td');
+                    tdName.textContent = ingredient.name;
+
+                    const tdPerPortion = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = "number";
+                    input.value = ingredient.menge;
+                    input.min = "0";
+                    input.step = "0.1";
+                    input.classList.add('perPortion');
+                    input.setAttribute('aria-label', `Menge pro Portion für ${ingredient.name}`);
+                    tdPerPortion.appendChild(input);
+
+                    const tdTotal = document.createElement('td');
+                    tdTotal.textContent = ingredient.menge;
+                    tdTotal.classList.add('total');
+                    tdTotal.setAttribute('aria-label', `Gesamtmenge für ${ingredient.name}`);
+
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdPerPortion);
+                    tr.appendChild(tdTotal);
+
+                    this.elements.recipeBody.appendChild(tr);
+                    this.currentIngredients.push({ 
+                        input: input, 
+                        totalCell: tdTotal, 
+                        name: ingredient.name 
+                    });
+                });
+
+                this.updateTotals();
+                this.elements.recipeDiv.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            hideRecipe() {
+                this.elements.recipeDiv.setAttribute('aria-hidden', 'true');
+                this.elements.recipeName.textContent = '';
+                this.currentIngredients = [];
+            }
+
+            updateTotals() {
+                const portions = parseFloat(this.elements.portionsInput.value) || 1;
+                
+                this.currentIngredients.forEach(item => {
+                    const perPortion = parseFloat(item.input.value) || 0;
+                    const total = (perPortion * portions).toFixed(1);
+                    item.totalCell.textContent = total;
+                });
+
+                // Save changes to localStorage
+                if (this.elements.recipeName.textContent) {
+                    const name = this.elements.recipeName.textContent;
+                    this.rezepte[name] = this.currentIngredients.map(item => ({
+                        name: item.name,
+                        menge: parseFloat(item.input.value) || 0
+                    }));
+                    this.saveRecipes();
+                }
+            }
+
+            addIngredientRow() {
+                const row = document.createElement('div');
+                row.classList.add('ingredient-row');
+                row.innerHTML = `
+                    <input type="text" placeholder="Zutat" required aria-label="Zutat">
+                    <input type="number" placeholder="Menge" min="0" step="0.1" required aria-label="Menge pro Portion">
+                    <button type="button" class="removeIngredient" aria-label="Zutat entfernen">-</button>
+                `;
+                this.elements.ingredientsContainer.appendChild(row);
+                
+                // Focus on the first input of the new row
+                row.querySelector('input[type="text"]').focus();
+            }
+
+            removeIngredientRow(row) {
+                if (this.elements.ingredientsContainer.children.length > 1) {
+                    row.remove();
+                } else {
+                    this.showNotification('Mindestens eine Zutat ist erforderlich', 'warning');
+                }
+            }
+
+            addNewRecipe() {
+                const name = this.elements.newBreiNameInput.value.trim();
+                
+                if (!name) {
+                    this.showNotification('Bitte gib einen Namen für den Brei ein', 'error');
+                    this.elements.newBreiNameInput.focus();
+                    return;
+                }
+
+                if (this.rezepte[name]) {
+                    this.showNotification('Ein Rezept mit diesem Namen existiert bereits', 'error');
+                    this.elements.newBreiNameInput.focus();
+                    return;
+                }
+
+                const ingredients = this.collectIngredients();
+                if (ingredients.length === 0) {
+                    this.showNotification('Bitte füge mindestens eine Zutat hinzu', 'error');
+                    return;
+                }
+
+                this.rezepte[name] = ingredients;
+                this.saveRecipes();
+                this.renderBreiGrid();
+                this.resetForm();
+                this.showNotification(`Rezept "${name}" wurde erfolgreich hinzugefügt`, 'success');
+            }
+
+            collectIngredients() {
+                const ingredients = [];
+                const rows = this.elements.ingredientsContainer.querySelectorAll('.ingredient-row');
+                
+                rows.forEach(row => {
+                    const inputs = row.querySelectorAll('input');
+                    const name = inputs[0].value.trim();
+                    const menge = parseFloat(inputs[1].value);
+                    
+                    if (name && !isNaN(menge) && menge > 0) {
+                        ingredients.push({ name, menge });
+                    }
+                });
+                
+                return ingredients;
+            }
+
+            resetForm() {
+                this.elements.addBreiForm.reset();
+                this.elements.ingredientsContainer.innerHTML = `
+                    <div class="ingredient-row">
+                        <input type="text" placeholder="Zutat" required aria-label="Zutat">
+                        <input type="number" placeholder="Menge" min="0" step="0.1" required aria-label="Menge pro Portion">
+                        <button type="button" class="removeIngredient" aria-label="Zutat entfernen">-</button>
+                    </div>
+                `;
+            }
+
+            saveRecipes() {
+                try {
+                    localStorage.setItem('rezepte', JSON.stringify(this.rezepte));
+                } catch (error) {
+                    console.error('Error saving recipes:', error);
+                    this.showNotification('Fehler beim Speichern der Rezepte', 'error');
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.textContent = message;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 1rem 1.5rem;
+                    border-radius: var(--border-radius);
+                    color: white;
+                    font-weight: 500;
+                    z-index: 1000;
+                    animation: slideIn 0.3s ease-out;
+                    max-width: 300px;
+                `;
+
+                // Set background color based on type
+                const colors = {
+                    success: 'var(--success-color)',
+                    error: 'var(--error-color)',
+                    warning: 'var(--warning-color)',
+                    info: 'var(--primary-color)'
+                };
+                notification.style.backgroundColor = colors[type] || colors.info;
+
+                document.body.appendChild(notification);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease-in';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        // Add CSS for notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new BreiManager();
+        });
+    </script>
+</body>
+
+</html>
