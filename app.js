@@ -1,4 +1,3 @@
-// Brei Recipe Manager - Optimized Version
 class BreiManager {
     constructor() {
         this.rezepte = {};
